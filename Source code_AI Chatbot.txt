@@ -1,0 +1,49 @@
+import requests
+from flask import Flask, request, jsonify
+from azure.ai.textanalytics import TextAnalyticsClient
+from azure.core.credentials import AzureKeyCredential
+
+# Azure AI Key & Endpoint (Replace with your actual keys)
+AZURE_AI_KEY = "YOUR_AZURE_AI_KEY"
+AZURE_AI_ENDPOINT = "YOUR_AZURE_AI_ENDPOINT"
+
+app = Flask(__name__)
+
+# Initialize Azure AI NLP client
+def authenticate_client():
+    return TextAnalyticsClient(endpoint=AZURE_AI_ENDPOINT, credential=AzureKeyCredential(AZURE_AI_KEY))
+
+client = authenticate_client()
+
+# Mock patient database
+patients = {
+    "John Doe": {"appointment": "March 15, 2025 - 10:00 AM", "prescriptions": ["Aspirin 100mg", "Metformin 500mg"]},
+    "Jane Smith": {"appointment": "April 1, 2025 - 2:30 PM", "prescriptions": ["Ibuprofen 200mg"]}
+}
+
+# Chatbot Response Function
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    user_input = request.json.get("message")
+    patient_name = request.json.get("patient_name", "John Doe")  # Default test patient
+
+    # Process NLP with Azure AI
+    response = client.analyze_sentiment(documents=[user_input])[0]
+    sentiment = response.sentiment
+
+    # Chatbot logic for healthcare queries
+    if "appointment" in user_input.lower():
+        return jsonify({"response": f"Your next appointment is on {patients.get(patient_name, {}).get('appointment', 'No upcoming appointments found.')}"})
+
+    elif "prescription" in user_input.lower():
+        meds = ", ".join(patients.get(patient_name, {}).get("prescriptions", ["No active prescriptions."]))
+        return jsonify({"response": f"Your current prescriptions are: {meds}"})
+
+    elif sentiment == "negative":
+        return jsonify({"response": "I'm sorry you're feeling this way. Would you like to speak with a medical professional?"})
+
+    else:
+        return jsonify({"response": "I can assist with appointments, prescriptions, and general inquiries. How may I help you?"})
+
+if __name__ == '__main__':
+    app.run(debug=True)

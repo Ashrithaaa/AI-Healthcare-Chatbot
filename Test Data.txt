@@ -1,0 +1,12 @@
+{
+    "patients": {
+        "John Doe": {
+            "appointment": "March 15, 2025 - 10:00 AM",
+            "prescriptions": ["Aspirin 100mg", "Metformin 500mg"]
+        },
+        "Jane Smith": {
+            "appointment": "April 1, 2025 - 2:30 PM",
+            "prescriptions": ["Ibuprofen 200mg"]
+        }
+    }
+}
